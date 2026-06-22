@@ -1,6 +1,6 @@
 # {{project_name}} 进度看板
 
-> 最后更新：{{updated_at}} · 当前阶段：**{{current_phase}}** · 迭代轮次：#{{iteration}}
+> 需求：**{{req_id}} / {{req_name}}** · 最后更新：{{updated_at}} · 当前阶段：**{{current_phase}}** · 迭代轮次：#{{iteration}}
 
 ## 一句话目标
 {{goal}}

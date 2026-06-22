@@ -1,15 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "NZW Dev Skills 任务状态文件",
-  "description": "跨会话续传的核心状态文件，存于用户项目根 .nds/state.json",
+  "description": "跨会话续传的核心状态文件，存于用户项目根 .nds/req-<id>/state.json（v1.1 起按需求隔离）",
   "type": "object",
   "required": ["version", "project", "phases", "task_tree", "decisions", "feedback_loop", "resume_hint"],
   "properties": {
-    "version": { "const": "1.0" },
+    "version": { "const": "1.1" },
     "project": {
       "type": "object",
-      "required": ["name", "created_at", "updated_at", "current_phase"],
+      "required": ["req_id", "name", "created_at", "updated_at", "current_phase"],
       "properties": {
+        "req_id": { "type": "string", "pattern": "^req-\\d{3}$", "description": "本需求在 .nds/index.json 中的 id" },
         "name": { "type": "string" },
         "goal": { "type": "string", "description": "一句话目标" },
         "created_at": { "type": "string", "format": "date-time" },

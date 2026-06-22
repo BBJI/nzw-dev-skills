@@ -21,15 +21,17 @@ metadata:
 
 ## 工作目录与状态
 
-产出落到 `.nds/04-tasks/`：
+**路径约定（v1.1）**：所有产出相对 `.nds/<active-req-id>/`，例如 `.nds/req-001/04-tasks/`。需求隔离见顶层 `.nds/index.json`。任务 ID（`T001` 等）在需求内自增即可，无需跨需求唯一。
+
+产出落到 `.nds/<req-id>/04-tasks/`：
 - `WBS.md` — 工作分解结构（Epic → Feature → Task 三层）
 - `task-tree.json` — 任务树（机器可读，同步到 state.json 的 `task_tree`）
 - `schedule.md` — 排期表（甘特/看板视图）
 - `dependencies.mmd` — 依赖关系图（mermaid DAG）
 
 入口动作：
-1. 读取 `.nds/state.json`，确认 `phases.review.status == "done"`
-2. `project.current_phase = "tasks"`，`phases.tasks.status = "in_progress"`
+1. 读取 `.nds/index.json` 确定 `active_req_id`（或用 `--req <id>` 指定），再读 `.nds/<req-id>/state.json`，确认 `phases.review.status == "done"`
+2. `project.current_phase = "tasks"`，`phases.tasks.status = "in_progress"`；同步回写 `index.json` 中该 req 的 `current_phase`/`updated_at`
 3. 任务树同步写入 state.json 的 `task_tree.tasks`
 
 ## 主导思想
@@ -74,7 +76,7 @@ metadata:
   "status": "todo",
   "depends_on": ["T001"],
   "assignee": "dev-skill",
-  "context_files": [".nds/01-requirements/PRD.md#F001", ".nds/02-design/components/api-spec.md"],
+  "context_files": [".nds/<req-id>/01-requirements/PRD.md#F001", ".nds/<req-id>/02-design/components/api-spec.md"],
   "input_contract": "User schema (T001 产出)，注册字段定义见 PRD F001",
   "output_contract": "POST /api/register 返回 201 与 user 对象；重复邮箱返回 409",
   "verification_cmd": "pnpm test src/api/register.test.ts",
@@ -173,6 +175,6 @@ Todo → Doing → Review → Done
 
 ## 与上下游交接
 
-- 输入：`.nds/03-review/sign-off.md` 已签字
+- 输入：`.nds/<req-id>/03-review/sign-off.md` 已签字
 - 输出给 dev-skill：task-tree.json 是开发按序执行的清单
 - 输出给 test-skill：每个任务的 `output_contract` 是测试用例设计的依据

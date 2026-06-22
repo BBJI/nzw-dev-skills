@@ -21,15 +21,17 @@ metadata:
 
 ## 工作目录与状态
 
-产出落到 `.nds/06-test/`：
+**路径约定（v1.1）**：所有产出相对 `.nds/<active-req-id>/`，例如 `.nds/req-001/06-test/`。需求隔离见顶层 `.nds/index.json`。
+
+产出落到 `.nds/<req-id>/06-test/`：
 - `test-cases.md` — 测试用例清单（设计侧）
 - `test-results.md` — 测试执行报告
 - `bug-reports/` — 每个 bug 一个 `.md`
 - `regression-suite.md` — 回归用例集
 
 入口动作：
-1. 读取 `.nds/state.json`，确认 `phases.dev.status` 至少 `in_progress`
-2. `project.current_phase = "test"`，`phases.test.status = "in_progress"`
+1. 读取 `.nds/index.json` 确定 `active_req_id`（或用 `--req <id>` 指定），再读 `.nds/<req-id>/state.json`，确认 `phases.dev.status` 至少 `in_progress`
+2. `project.current_phase = "test"`，`phases.test.status = "in_progress"`；同步回写 `index.json` 中该 req 的 `current_phase`/`updated_at`/`open_blockers`
 3. Bug 写入 state.json 的 `feedback_loop.open_bugs`，`iteration++`
 
 ## 主导思想
@@ -43,7 +45,7 @@ metadata:
 
 ### 1. 测试用例设计（test-cases.md）
 
-基于 `.nds/01-requirements/PRD.md`、`.nds/04-tasks/task-tree.json`、`.nds/02-design/` 设计。
+基于 `.nds/<req-id>/01-requirements/PRD.md`、`.nds/<req-id>/04-tasks/task-tree.json`、`.nds/<req-id>/02-design/` 设计。
 
 #### 设计四件套
 

@@ -37,13 +37,18 @@ Plan → Act → Observe → Reflect → (next phase)
 
 ## 工作目录与状态
 
+**路径约定（v1.1）**：所有产出相对 `.nds/<active-req-id>/`，例如 `.nds/req-001/07-workflow/loop-log.md`。需求隔离见顶层 `.nds/index.json`。instruction-skill 阶段例外，落到 `.nds/00-instruction/`（项目级共享）。
+
 入口动作：
-1. 读取或初始化 `.nds/state.json`
-   - 若不存在：初始化结构（schema 见 `templates/state.schema.json`），`current_phase = "init"`
-   - 若存在：读取 `current_phase` 从该阶段接续
-2. 全程写入 `.nds/07-workflow/loop-log.md`，记录每一轮循环
-3. 每阶段完成后更新 state.json 的 `phases.<phase>.status`、`current_phase`、`resume_hint`
-4. 同步刷新 `.nds/PROGRESS.md`
+1. 读取或初始化 `.nds/index.json`
+   - 不存在 → 初始化（schema 见 `templates/index.schema.json`），创建首个 req-001 子目录并设为 active
+   - 存在 → 读取 `active_req_id` 从该 req 接续
+2. 读取或初始化 `.nds/<req-id>/state.json`
+   - 不存在：初始化结构（schema 见 `templates/state.schema.json`，`version: "1.1"`），`current_phase = "init"`
+   - 存在：读取 `current_phase` 从该阶段接续
+3. 全程写入 `.nds/<req-id>/07-workflow/loop-log.md`，记录每一轮循环
+4. 每阶段完成后更新 state.json 的 `phases.<phase>.status`、`current_phase`、`resume_hint`，同步回写 `index.json` 中该 req 的 `current_phase`/`phases_summary`/`open_blockers`/`updated_at`
+5. 同步刷新 `.nds/<req-id>/PROGRESS.md` 与顶层 `.nds/PROGRESS.md`（总览）
 
 ## 阶段编排（SOP）
 
@@ -83,7 +88,7 @@ Plan → Act → Observe → Reflect → (next phase)
 
 - 调 `review-skill`
 - **门禁**：Blocker 全关闭 + Critical 有缓解 + 用户签字
-- **人在环**：必须等用户在 `.nds/03-review/sign-off.md` 签字
+- **人在环**：必须等用户在 `.nds/<req-id>/03-review/sign-off.md` 签字
 - 未过 → 回流到对应上游阶段
 
 ### 阶段 4：tasks
@@ -142,13 +147,13 @@ Plan → Act → Observe → Reflect → (next phase)
 任意阶段都可暂停（Ctrl+C、清空上下文、新开会话）。下次对话：
 
 1. 用户输入 `/nzw-resume` 或 `/nzw-workflow`（无参数）
-2. workflow-skill 读取 `.nds/state.json`
-3. 根据 `current_phase` 与 `resume_hint` 接续
+2. workflow-skill 读取 `.nds/index.json`，若多需求则列出供用户选择 active_req_id
+3. 读取 `.nds/<req-id>/state.json`，根据 `current_phase` 与 `resume_hint` 接续
 4. 检查 `phases.<current>.status`：
    - `in_progress` → 从中断点继续
    - `blocked` → 提示用户处理阻塞
    - `pending` → 启动该阶段
-5. 向用户报告：当前阶段、已完成产出、下一步建议
+5. 向用户报告：当前 req、当前阶段、已完成产出、下一步建议
 
 state.json 是唯一真源；PROGRESS.md 是其可读视图。
 

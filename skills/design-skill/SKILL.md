@@ -19,7 +19,9 @@ metadata:
 
 ## 工作目录与状态
 
-产出落到 `.nds/02-design/`：
+**路径约定（v1.1）**：所有产出相对 `.nds/<active-req-id>/`，例如 `.nds/req-001/02-design/`。需求隔离见顶层 `.nds/index.json`。
+
+产出落到 `.nds/<req-id>/02-design/`：
 - `design-tokens.json` — W3C 设计令牌（Reference / System / Component 三层）
 - `design-spec.md` — 设计规范主体
 - `components/` — 每个组件一个 `.md`（规格）+ `.html`（高保真样例）
@@ -28,9 +30,9 @@ metadata:
 - `interaction-notes.html` — 交互说明（HTML，可在浏览器查看）
 
 入口动作：
-1. 读取 `.nds/state.json`，确认 `phases.requirements.status == "done"`（否则提示先做需求）
-2. `project.current_phase = "design"`，`phases.design.status = "in_progress"`
-3. 完成后更新 state.json 与 PROGRESS.md
+1. 读取 `.nds/index.json` 确定 `active_req_id`（或用 `--req <id>` 指定），再读 `.nds/<req-id>/state.json`，确认 `phases.requirements.status == "done"`（否则提示先做需求）
+2. `project.current_phase = "design"`，`phases.design.status = "in_progress"`；同步回写 `index.json` 中该 req 的 `current_phase`/`updated_at`
+3. 完成后更新 state.json 与 `.nds/<req-id>/PROGRESS.md`、顶层 `.nds/PROGRESS.md`
 
 ## 主导思想
 
@@ -201,6 +203,6 @@ HTML 形式，含：
 
 ## 与上下游交接
 
-- 输入：`.nds/01-requirements/PRD.md`、`prototype.html`
+- 输入：`.nds/<req-id>/01-requirements/PRD.md`、`prototype.html`
 - 输出给 review-skill：design-spec.md + components/ + hifi-pages/ 是三维评审中 UX 可实现性维度的对象
 - 输出给 dev-skill：design-tokens.json 与组件规格是开发实现的契约

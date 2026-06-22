@@ -19,7 +19,9 @@ metadata:
 
 ## 工作目录与状态
 
-所有产出落到当前工作目录的 `.nds/01-requirements/`：
+**路径约定（v1.1）**：所有产出相对 `.nds/<active-req-id>/`，例如 `.nds/req-001/01-requirements/PRD.md`。需求隔离见顶层 `.nds/index.json`（schema 见 `templates/index.schema.json`）。
+
+所有产出落到 `.nds/<req-id>/01-requirements/`：
 - `PRD.md` — 需求文档主体
 - `prototype.html` — 低保真原型（HTML，可在浏览器打开）
 - `traceability-matrix.md` — 追溯矩阵（需求 ↔ 目标 ↔ Story ↔ 验收点）
@@ -27,10 +29,13 @@ metadata:
 - `glossary.md` — 术语表
 
 入口动作：
-1. 读取或初始化 `.nds/state.json`（schema 见 `templates/state.schema.json`）
-2. `project.current_phase = "requirements"`，`phases.requirements.status = "in_progress"`
-3. `project.name`、`project.goal` 从用户输入提炼
-4. 完成后写 `resume_hint`，更新 `PROGRESS.md`
+1. 读取或初始化 `.nds/index.json`：
+   - 不存在 → 初始化，`requirements: []`，`active_req_id: null`
+   - 用户输入是新需求 → 生成下一编号 `req-NNN`（`req-001` 起，三位补零），追加到 `requirements[]` 并设为 `active_req_id`，创建子目录 `.nds/req-NNN/`
+   - 续作已有需求 → 用 `--req <id>` 或 `index.active_req_id`
+2. 在 `.nds/<req-id>/` 下初始化 `state.json`（schema 见 `templates/state.schema.json`，`version: "1.1"`，`project.req_id` 填入），`project.current_phase = "requirements"`，`phases.requirements.status = "in_progress"`
+3. `project.name`、`project.goal` 从用户输入提炼；同步回写 `index.json` 中该 req 的 `name`/`goal`/`current_phase`/`updated_at`
+4. 完成后写 `resume_hint`，更新 `.nds/<req-id>/PROGRESS.md` 与顶层 `.nds/PROGRESS.md`（总览）
 
 ## 主导思想
 
@@ -144,6 +149,6 @@ metadata:
 
 ## 与下游 skill 的交接契约
 
-- `.nds/01-requirements/PRD.md` 是 design-skill 的输入
+- `.nds/<req-id>/01-requirements/PRD.md` 是 design-skill 的输入
 - `traceability-matrix.md` 是 review-skill 做三方对齐的依据
 - `risks.md` 中"技术可行性"类风险是 review-skill 重点核查项

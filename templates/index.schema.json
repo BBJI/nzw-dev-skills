@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NZW Dev Skills 需求索引文件",
+  "description": "顶层 .nds/index.json —— 列出项目内所有需求，指向活跃需求。v1.1 引入。",
+  "type": "object",
+  "required": ["version", "project_root", "active_req_id", "requirements"],
+  "properties": {
+    "version": { "const": "1.1" },
+    "project_root": { "type": "string", "description": "用户项目根绝对路径" },
+    "active_req_id": {
+      "type": "string",
+      "pattern": "^req-\\d{3}$",
+      "description": "当前活跃需求 id，未指定 --req 时所有 skill 默认作用于此"
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "slug", "name", "goal", "current_phase", "phases_summary", "open_blockers", "created_at", "updated_at", "path"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^req-\\d{3}$" },
+          "slug": { "type": "string", "description": "人类可读短名（kebab-case），与 id 同步生成" },
+          "name": { "type": "string", "description": "需求名（可中文）" },
+          "goal": { "type": "string" },
+          "current_phase": {
+            "type": "string",
+            "enum": ["init", "requirements", "design", "review", "tasks", "dev", "test", "done"]
+          },
+          "phases_summary": {
+            "type": "object",
+            "properties": {
+              "instruction": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] },
+              "requirements": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] },
+              "design": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] },
+              "review": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] },
+              "tasks": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] },
+              "dev": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] },
+              "test": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] }
+            }
+          },
+          "open_blockers": { "type": "integer", "minimum": 0 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "path": { "type": "string", "description": "相对项目根的需求子目录路径，如 .nds/req-001/" }
+        }
+      }
+    }
+  }
+}

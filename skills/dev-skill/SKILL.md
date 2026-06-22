@@ -22,14 +22,16 @@ metadata:
 
 ## 工作目录与状态
 
-产出落到 `.nds/05-dev/`：
+**路径约定（v1.1）**：所有产出相对 `.nds/<active-req-id>/`，例如 `.nds/req-001/05-dev/`。需求隔离见顶层 `.nds/index.json`。
+
+产出落到 `.nds/<req-id>/05-dev/`：
 - `implementation-log.md` — 每个任务的实现日志（红绿循环记录）
 - `bugfix-log.md` — Bug 修复记录
 - `commits.md` — 提交历史（Conventional Commits）
 
 入口动作：
-1. 读取 `.nds/state.json`，从 `task_tree.tasks` 取目标任务（指定 ID 或下一个 `todo`）
-2. `project.current_phase = "dev"`，任务状态 `todo → doing`，记录 `started_at`
+1. 读取 `.nds/index.json` 确定 `active_req_id`（或用 `--req <id>` 指定），再读 `.nds/<req-id>/state.json`，从 `task_tree.tasks` 取目标任务（指定 ID 或下一个 `todo`）
+2. `project.current_phase = "dev"`，任务状态 `todo → doing`，记录 `started_at`；同步回写 `index.json` 中该 req 的 `current_phase`/`updated_at`
 3. 读取任务的 `context_files` / `input_contract` / `output_contract` / `verification_cmd`
 4. 完成后任务状态置 `review`，记录 `completed_at`
 
@@ -45,9 +47,9 @@ metadata:
 ### 1. 任务上下文加载
 
 读取并理解：
-- `.nds/01-requirements/PRD.md` 对应段落（任务 context_files 指向）
-- `.nds/02-design/` 对应组件规格、API 契约
-- `.nds/04-tasks/task-tree.json` 中本任务的 input/output_contract
+- `.nds/<req-id>/01-requirements/PRD.md` 对应段落（任务 context_files 指向）
+- `.nds/<req-id>/02-design/` 对应组件规格、API 契约
+- `.nds/<req-id>/04-tasks/task-tree.json` 中本任务的 input/output_contract
 - 现有代码结构（若有）
 
 ### 2. TDD 红-绿-重构循环
@@ -110,7 +112,7 @@ pnpm typecheck     # 类型检查
 pnpm test          # 全量测试
 ```
 
-若项目无上述命令，用项目实际命令（从 `.nds/00-instruction/CLAUDE.md` 或 package.json/similar 推断）。
+若项目无上述命令，用项目实际命令（从 `.nds/00-instruction/CLAUDE.md` 或 package.json/similar 推断）。注意 `.nds/00-instruction/` 是项目级共享目录，不进 req 子目录。
 
 ### 5. 提交（Conventional Commits）
 
@@ -153,4 +155,4 @@ Refs: T002
 
 - 输入：task-tree.json 中的任务四要素、PRD/设计对应段落
 - 输出给 test-skill：实现代码 + 测试套件 + implementation-log
-- Bug 反馈输入：来自 `.nds/06-test/bug-reports/`，触发新一轮红绿循环
+- Bug 反馈输入：来自 `.nds/<req-id>/06-test/bug-reports/`，触发新一轮红绿循环

@@ -1,0 +1,17 @@
+# {{project_root}} 需求总览
+
+> 最后更新：{{updated_at}} · 活跃需求：**{{active_req_id}}** · 需求总数：{{req_count}}
+
+## 需求清单
+
+| Req ID | 名称 | 当前阶段 | 待解 Blocker | 最近更新 | 路径 |
+|---|---|---|---|---|---|
+{{#each requirements}}
+| {{id}} | {{name}} | {{current_phase}} | {{open_blockers}} | {{updated_at}} | {{path}} |
+{{/each}}
+
+## 提示
+
+- `/nzw-status --req <id>` 查看单需求看板
+- `/nzw-switch <id>` 切换活跃需求
+- `/nzw-resume` 列出所有需求并选择续传

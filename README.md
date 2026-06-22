@@ -76,37 +76,54 @@ NZW_REPO=myorg/nzw-fork NZW_CLAUDE_DIR=~/my-claude \
 | `/nzw-test` | 测试用例与验证 | test-skill |
 | `/nzw-instruction` | 生成项目规范 | instruction-skill |
 | `/nzw-workflow <任务描述>` | **全流程自主交付** | workflow-skill |
-| `/nzw-resume` | 跨会话续传 | 读 `.nds/state.json` 接续 |
-| `/nzw-status` | 查看当前进度 | 展示 `.nds/PROGRESS.md` |
+| `/nzw-resume` | 跨会话续传 | 读 `.nds/index.json` 选择需求后接续 |
+| `/nzw-status [--req <id>]` | 查看进度 | 无参数看总览，`--req` 看单需求 |
+| `/nzw-switch <req-id>` | 切换活跃需求 | 改 `.nds/index.json` 的 `active_req_id` |
 
 Codex 无斜杠命令，用自然语言触发即可（如"启动 nzw workflow 做一个 XXX"）。
 
 ## 任务工作目录
 
-每次执行任务时，在用户当前工作目录下创建 `.nds/`：
+每次执行任务时，在用户当前工作目录下创建 `.nds/`。**v1.1 起按需求隔离**：顶层只放索引与项目级共享产物，每需求独占一个 `req-NNN/` 子树。
 
 ```
 .nds/
-├── state.json              # 机器态：任务树/进度/决策（跨会话续传核心）
-├── PROGRESS.md             # 人类态：可读进度看板
-├── 00-instruction/         # 项目规范
-├── 01-requirements/        # 需求文档 + 原型 + 追溯矩阵 + 风险
-├── 02-design/              # 设计令牌 + 组件规格 + 高保真稿
-├── 03-review/              # 评审报告 + 决策日志
-├── 04-tasks/               # WBS + 任务树 + 排期
-├── 05-dev/                 # 实现日志 + Bug 修复记录
-├── 06-test/                # 测试用例 + 测试结果 + Bug 报告
-└── 07-workflow/            # Loop Engineering 循环日志
+├── index.json              # 顶层索引：所有需求 + active_req_id 指针
+├── PROGRESS.md             # 顶层总览看板（多需求）
+├── 00-instruction/         # 项目级规范（跨需求共享，不进 req 子目录）
+└── req-001/                # 需求 001 独立子树
+    ├── state.json          # 机器态：任务树/进度/决策（跨会话续传核心）
+    ├── PROGRESS.md         # 人类态：单需求可读看板
+    ├── 01-requirements/    # 需求文档 + 原型 + 追溯矩阵 + 风险
+    ├── 02-design/          # 设计令牌 + 组件规格 + 高保真稿
+    ├── 03-review/          # 评审报告 + 决策日志
+    ├── 04-tasks/           # WBS + 任务树 + 排期
+    ├── 05-dev/             # 实现日志 + Bug 修复记录
+    ├── 06-test/            # 测试用例 + 测试结果 + Bug 报告
+    └── 07-workflow/        # Loop Engineering 循环日志
 ```
+
+- 新需求由 `/nzw-req <任务>` 或 `/nzw-workflow <任务> --new` 创建，自动分配 `req-NNN`（三位补零）并设为 `active_req_id`
+- 切换活跃需求：`/nzw-switch <req-id>`
+- 大部分命令支持 `--req <id>` 显式指定，未指定时作用于 `active_req_id`
+
+### 老项目迁移（v1.0 → v1.1）
+
+检测到 `.nds/state.json` 存在但 `.nds/index.json` 不存在时，自动迁移：
+
+1. 把现有 `.nds/01-requirements/` … `.nds/07-workflow/` 移到 `.nds/req-001/` 下
+2. 原 `state.json` 移到 `.nds/req-001/state.json`，`project.req_id` 设为 `"req-001"`，`version` 升到 `"1.1"`
+3. 生成 `.nds/index.json`，`active_req_id = "req-001"`
+4. `00-instruction/` 若存在则保留在顶层（项目级共享）
 
 ## 跨会话续传
 
 任意阶段都可暂停（直接清空上下文或新开会话）。下次对话时：
 
-1. 输入 `/nzw-resume` —— workflow-skill 读取 `.nds/state.json`，根据 `current_phase` 与 `resume_hint` 接续工作。
-2. 或输入 `/nzw-status` 查看进度后，手动触发下一阶段指令。
+1. 输入 `/nzw-resume` —— 列出所有需求供选择，选定后读 `.nds/<req-id>/state.json`，根据 `current_phase` 与 `resume_hint` 接续。
+2. 或输入 `/nzw-status` 看总览，`/nzw-status --req <id>` 看单需求后手动触发下一阶段指令。
 
-`state.json` 是唯一真源；`PROGRESS.md` 是其人类可读视图，每次状态变更同步刷新。
+`index.json` 是需求级索引，每需求的 `state.json` 是其唯一真源；`PROGRESS.md` 是人类可读视图，每次状态变更同步刷新。
 
 ## Loop Engineering 思想
 
@@ -139,15 +156,15 @@ nzw-dev-skills/
 │   ├── test-skill/
 │   ├── instruction-skill/
 │   └── workflow-skill/
-├── commands/               # 10 个斜杠命令
+├── commands/               # 11 个斜杠命令（含 nzw-switch）
 ├── codex/                  # Codex 平台 AGENTS.md
-└── templates/              # state.schema.json / progress.md.template
+└── templates/              # state.schema.json / index.schema.json / progress*.md.template
 ```
 
 ## 设计原则
 
 1. **精简且精准**：每个 SKILL.md < 300 行，只写必要的「为什么」与「怎么做」。
-2. **状态机驱动**：所有阶段产物落入 `.nds/`，`state.json` 是唯一真源。
+2. **状态机驱动**：所有阶段产物落入 `.nds/<req-id>/`，`state.json` 是唯一真源；顶层 `index.json` 管理多需求。
 3. **契约化**：阶段间通过文件契约交接，不依赖对话上下文。
 4. **人在环**：关键决策点必须等用户签字，AI 不擅自推进。
 5. **可恢复**：任何阶段崩溃都能从 `state.json` 接续。

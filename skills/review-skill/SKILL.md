@@ -21,15 +21,17 @@ metadata:
 
 ## 工作目录与状态
 
-产出落到 `.nds/03-review/`：
+**路径约定（v1.1）**：所有产出相对 `.nds/<active-req-id>/`，例如 `.nds/req-001/03-review/`。需求隔离见顶层 `.nds/index.json`。
+
+产出落到 `.nds/<req-id>/03-review/`：
 - `review-report.md` — 评审总报告
 - `issues.md` — 问题清单（含严重度分级）
 - `decisions.md` — 决策日志
 - `sign-off.md` — 准入签字记录
 
 入口动作：
-1. 读取 `.nds/state.json`，确认 requirements 与 design 阶段已 done
-2. `project.current_phase = "review"`，`phases.review.status = "in_progress"`
+1. 读取 `.nds/index.json` 确定 `active_req_id`（或用 `--req <id>` 指定），再读 `.nds/<req-id>/state.json`，确认 requirements 与 design 阶段已 done
+2. `project.current_phase = "review"`，`phases.review.status = "in_progress"`；同步回写 `index.json` 中该 req 的 `current_phase`/`updated_at`
 3. 评审完成后根据是否有 Blocker 决定 `status`：done / blocked（回流上游）
 
 ## 评审三维度检查清单
@@ -77,9 +79,9 @@ metadata:
 ### 1. 预读与三方对齐
 
 读取：
-- `.nds/01-requirements/PRD.md`、`traceability-matrix.md`、`risks.md`
-- `.nds/02-design/design-spec.md`、`components/`、`user-flows.md`、`hifi-pages/`
-- 技术方案（若有，如 `.nds/02-design/tech-architecture.md` 或现有代码）
+- `.nds/<req-id>/01-requirements/PRD.md`、`traceability-matrix.md`、`risks.md`
+- `.nds/<req-id>/02-design/design-spec.md`、`components/`、`user-flows.md`、`hifi-pages/`
+- 技术方案（若有，如 `.nds/<req-id>/02-design/tech-architecture.md` 或现有代码）
 
 ### 2. 逐项核查
 

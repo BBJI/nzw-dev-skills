@@ -21,7 +21,9 @@ metadata:
 
 ## 工作目录与状态
 
-产出落到 `.nds/00-instruction/`：
+**路径约定（v1.1）**：instruction-skill 是**项目级**规范生成器，产出**不进 req 子目录**，统一落到顶层 `.nds/00-instruction/`，跨需求共享。需求级状态隔离见顶层 `.nds/index.json`。
+
+产出落到 `.nds/00-instruction/`（顶层，非 req 子目录）：
 - `CLAUDE.md` — Claude Code 项目规范
 - `AGENTS.md` — OpenAI Codex 项目规范
 - `.cursor/rules/*.mdc` — Cursor MDC 格式规则
@@ -30,8 +32,8 @@ metadata:
 - `INSTRUCTION-SUMMARY.md` — 多工具规范汇总与差异说明
 
 入口动作：
-1. 读取 `.nds/state.json`，判断项目状态
-2. `phases.instruction.status = "in_progress"`
+1. 读取 `.nds/index.json` 判断项目状态（若有多个 req，综合所有 req 的产出提炼跨需求共性规范）
+2. 在所有 req 的 state.json 中同步 `phases.instruction.status = "in_progress"`；或仅作用于 `active_req_id`（用户通过 `--req` 显式指定时）
 3. 生成后写入 `INSTRUCTION-SUMMARY.md` 并建议用户把规范文件提交到 git
 
 ## 主导思想
@@ -47,7 +49,7 @@ metadata:
 ### 1. 判断项目类型
 
 - **已有项目**：扫描代码库（package.json / pyproject.toml / Cargo.toml / go.mod / pom.xml / .gitignore / CI 配置 / ESLint / .editorconfig 等），抽取隐性约定
-- **新项目**：基于 `.nds/01-requirements/` + `.nds/02-design/` + `.nds/04-tasks/` + `.nds/05-dev/` 总结已交付物的约定
+- **新项目**：基于 `.nds/<req-id>/01-requirements/` + `.nds/<req-id>/02-design/` + `.nds/<req-id>/04-tasks/` + `.nds/<req-id>/05-dev/` 总结已交付物的约定（多 req 场景下综合所有 req 提炼共性）
 
 ### 2. 核心约定提炼（工具无关）
 
