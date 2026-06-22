@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   nzw-dev-skills 一键安装脚本（Windows PowerShell）
 .PARAMETER Target
