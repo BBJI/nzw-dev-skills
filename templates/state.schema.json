@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NZW Dev Skills 任务状态文件",
+  "description": "跨会话续传的核心状态文件，存于用户项目根 .nds/state.json",
+  "type": "object",
+  "required": ["version", "project", "phases", "task_tree", "decisions", "feedback_loop", "resume_hint"],
+  "properties": {
+    "version": { "const": "1.0" },
+    "project": {
+      "type": "object",
+      "required": ["name", "created_at", "updated_at", "current_phase"],
+      "properties": {
+        "name": { "type": "string" },
+        "goal": { "type": "string", "description": "一句话目标" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "current_phase": {
+          "type": "string",
+          "enum": ["init", "requirements", "design", "review", "tasks", "dev", "test", "done"]
+        },
+        "last_checkpoint_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "description": "七个阶段的执行状态",
+      "properties": {
+        "instruction": { "$ref": "#/definitions/phase" },
+        "requirements": { "$ref": "#/definitions/phase" },
+        "design": { "$ref": "#/definitions/phase" },
+        "review": { "$ref": "#/definitions/phase" },
+        "tasks": { "$ref": "#/definitions/phase" },
+        "dev": { "$ref": "#/definitions/phase" },
+        "test": { "$ref": "#/definitions/phase" }
+      }
+    },
+    "task_tree": {
+      "type": "object",
+      "required": ["tasks"],
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "title", "phase", "status"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^T\\d{3}$" },
+              "title": { "type": "string" },
+              "phase": { "type": "string", "enum": ["dev", "test"] },
+              "status": { "type": "string", "enum": ["todo", "doing", "review", "blocked", "done"] },
+              "depends_on": { "type": "array", "items": { "type": "string" } },
+              "assignee": { "type": "string" },
+              "artifacts": { "type": "array", "items": { "type": "string" } },
+              "bug_ids": { "type": "array", "items": { "type": "string" } },
+              "started_at": { "type": "string" },
+              "completed_at": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "phase", "decision", "timestamp"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^D\\d{3}$" },
+          "phase": { "type": "string" },
+          "decision": { "type": "string" },
+          "rationale": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "feedback_loop": {
+      "type": "object",
+      "required": ["iteration", "open_bugs"],
+      "properties": {
+        "iteration": { "type": "integer", "minimum": 1 },
+        "open_bugs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "severity", "status"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^B\\d{3}$" },
+              "severity": { "type": "string", "enum": ["blocker", "critical", "major", "minor", "trivial"] },
+              "status": { "type": "string", "enum": ["open", "in_fix", "retest", "closed", "wontfix"] },
+              "task_id": { "type": "string" },
+              "summary": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "resume_hint": {
+      "type": "string",
+      "description": "下次对话接续工作的简短指引，由每个 skill 完成后更新"
+    }
+  },
+  "definitions": {
+    "phase": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "type": "string", "enum": ["pending", "in_progress", "blocked", "done", "skipped"] },
+        "started_at": { "type": "string" },
+        "completed_at": { "type": "string" },
+        "artifacts": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+# {{project_name}} 进度看板
+
+> 最后更新：{{updated_at}} · 当前阶段：**{{current_phase}}** · 迭代轮次：#{{iteration}}
+
+## 一句话目标
+{{goal}}
+
+## 阶段进度
+
+| 阶段 | 状态 | 产出物 |
+|---|---|---|
+| 规范 (instruction) | {{instruction_status}} | {{instruction_artifacts}} |
+| 需求 (requirements) | {{requirements_status}} | {{requirements_artifacts}} |
+| 设计 (design) | {{design_status}} | {{design_artifacts}} |
+| 评审 (review) | {{review_status}} | {{review_artifacts}} |
+| 任务 (tasks) | {{tasks_status}} | {{tasks_artifacts}} |
+| 开发 (dev) | {{dev_status}} | {{dev_artifacts}} |
+| 测试 (test) | {{test_status}} | {{test_artifacts}} |
+
+## 任务清单（开发阶段）
+
+| ID | 标题 | 状态 | 依赖 | Bug |
+|---|---|---|---|---|
+{{#each tasks}}
+| {{id}} | {{title}} | {{status}} | {{depends_on}} | {{bug_count}} |
+{{/each}}
+
+## 待修复 Bug
+
+{{#each open_bugs}}
+- **{{id}}** [{{severity}}] {{summary}} → {{task_id}} ({{status}})
+{{/each}}
+
+## 关键决策
+
+{{#each decisions}}
+- **{{id}}** [{{phase}}] {{decision}} — _{{rationale}}_
+{{/each}}
+
+## 续传提示
+{{resume_hint}}

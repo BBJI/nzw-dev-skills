@@ -1,0 +1,30 @@
+{
+  "name": "nzw-dev-skills",
+  "version": "1.0.0",
+  "description": "AI 自主全流程交付技能包（需求→设计→评审→任务→开发→测试→规范），支持 Claude Code 与 Codex",
+  "author": "nzw",
+  "skills": [
+    { "id": "req-analysis-skill", "name": "req-analysis", "trigger": "/nzw-req", "phase": "requirements" },
+    { "id": "design-skill", "name": "design", "trigger": "/nzw-design", "phase": "design" },
+    { "id": "review-skill", "name": "review", "trigger": "/nzw-review", "phase": "review" },
+    { "id": "task-allocation-skill", "name": "task-allocation", "trigger": "/nzw-task", "phase": "tasks" },
+    { "id": "dev-skill", "name": "dev", "trigger": "/nzw-dev", "phase": "dev" },
+    { "id": "test-skill", "name": "test", "trigger": "/nzw-test", "phase": "test" },
+    { "id": "instruction-skill", "name": "instruction", "trigger": "/nzw-instruction", "phase": "instruction" },
+    { "id": "workflow-skill", "name": "workflow", "trigger": "/nzw-workflow", "phase": "all" }
+  ],
+  "commands": [
+    "nzw-req", "nzw-design", "nzw-review", "nzw-task",
+    "nzw-dev", "nzw-test", "nzw-instruction", "nzw-workflow",
+    "nzw-resume", "nzw-status"
+  ],
+  "platforms": {
+    "claude-code": {
+      "skills_dir": "~/.claude/skills",
+      "commands_dir": "~/.claude/commands"
+    },
+    "codex": {
+      "agents_file": "~/.codex/AGENTS.md"
+    }
+  }
+}
