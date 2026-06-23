@@ -27,14 +27,20 @@ curl -fsSL https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.sh
 # 先强制 TLS 1.2（GitHub 仅接受 TLS 1.2+，旧 PowerShell 默认 TLS 1.0/1.1 会报
 # 「基础连接已经关闭: 接收时发生错误」），再安装
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-irm https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex
+& ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1').Content.TrimStart([char]0xFEFF))) -Target all
 ```
 
-指定目标平台：
+> ⚠ **不要用 `irm ... | iex`**，它在本脚本上会失败，原因有二：
+> 1. Windows PowerShell 5.1 的 `Invoke-RestMethod` 会把多行脚本**按行拆成数组**传给 `iex`，逐行执行导致 `<# #>` 块注释失效，注释里的 `.EXAMPLE`/`.\install.ps1` 会被当成命令报「无法识别」。
+> 2. 本脚本带 UTF-8 BOM（为磁盘执行时中文不乱码），`iex`/`scriptblock` 收到的字符串不会自动剥 BOM，首行 `?<#` 会被当成命令。
+>
+> 正解：用 `Invoke-WebRequest ... .Content` 取**单个字符串**，`.TrimStart([char]0xFEFF)` 去掉 BOM，再 `[scriptblock]::Create` 执行（末尾 `-Target` 可传参）。
+
+指定目标平台（改末尾 `-Target`）：
 
 ```powershell
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-& { irm https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex } -Target codex
+& ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1').Content.TrimStart([char]0xFEFF))) -Target codex
 ```
 
 > 系统自带 `curl` 或 `wget`、`tar` 即可，无需 git。
@@ -44,7 +50,7 @@ irm https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex
 > ```powershell
 > [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 > $env:NZW_MIRROR = 'https://ghproxy.net'
-> irm https://ghproxy.net/https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex
+> & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://ghproxy.net/https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1').Content.TrimStart([char]0xFEFF))) -Target all
 > ```
 > 仍失败则改用本地安装（见下）。
 

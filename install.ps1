@@ -8,7 +8,10 @@
   .\install.ps1 -Target all
 .EXAMPLE
   # 一行命令远程安装（无需先 clone）
-  irm https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex
+  # 勿用 `irm ... | iex`：PS 5.1 下 irm 按行拆数组传给 iex 会破坏多行块注释/函数；
+  # 且本脚本带 UTF-8 BOM，字符串方式执行前需 TrimStart([char]0xFEFF) 去掉 BOM。
+  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1').Content.TrimStart([char]0xFEFF))) -Target all
 #>
 param(
     [ValidateSet('claude-code','codex','all')]
