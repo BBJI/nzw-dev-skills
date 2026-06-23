@@ -24,16 +24,29 @@ curl -fsSL https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.sh
 ### Windows PowerShell
 
 ```powershell
+# 先强制 TLS 1.2（GitHub 仅接受 TLS 1.2+，旧 PowerShell 默认 TLS 1.0/1.1 会报
+# 「基础连接已经关闭: 接收时发生错误」），再安装
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 irm https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex
 ```
 
 指定目标平台：
 
 ```powershell
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 & { irm https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex } -Target codex
 ```
 
 > 系统自带 `curl` 或 `wget`、`tar` 即可，无需 git。
+>
+> **国内网络拉取失败**：`raw.githubusercontent.com` / `codeload.github.com` 可能被重置。
+> 走镜像前缀（自举阶段下载 tarball 也会自动走镜像）：
+> ```powershell
+> [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+> $env:NZW_MIRROR = 'https://ghproxy.net'
+> irm https://ghproxy.net/https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex
+> ```
+> 仍失败则改用本地安装（见下）。
 
 ## 本地安装（已 clone 仓库）
 
@@ -54,6 +67,7 @@ irm https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1 | iex
 |---|---|---|
 | `NZW_REPO` | GitHub 仓库（远程安装时拉取源） | `BBJI/nzw-dev-skills` |
 | `NZW_BRANCH` | 拉取分支 | `main` |
+| `NZW_MIRROR` | GitHub 镜像前缀（国内网络加速，自举下载 tarball 时生效） | 空 |
 | `NZW_CLAUDE_DIR` | Claude Code 安装目录 | `~/.claude` |
 | `NZW_CODEX_DIR` | Codex 安装目录 | `~/.codex` |
 

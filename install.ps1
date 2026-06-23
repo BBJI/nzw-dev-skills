@@ -17,9 +17,27 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# 强制 TLS 1.2：GitHub 仅接受 TLS 1.2+，旧版 PowerShell 默认走 TLS 1.0/1.1，
+# 会导致「基础连接已经关闭: 接收时发生错误」。
+# 注意：这对 `irm ... | iex` 管道本身无效——TLS 必须在 irm 执行前由用户设置；
+# 此处主要保证自举阶段 Invoke-WebRequest 拉 tarball 时握手成功。
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+} catch {
+    Write-Host "⚠ 无法设置 TLS 1.2：$_" -ForegroundColor Yellow
+}
+
 # 默认仓库（请改为你的 GitHub 仓库）
 $NzwRepoDefault   = 'BBJI/nzw-dev-skills'
 $NzwBranchDefault = 'main'
+
+# GitHub 镜像前缀（国内网络拉取失败时设置，如 $env:NZW_MIRROR='https://ghproxy.net'）
+# 拼接后会形如 https://ghproxy.net/https://codeload.github.com/...
+function Resolve-GhUrl {
+    param([string]$Url)
+    $mirror = if ($env:NZW_MIRROR) { $env:NZW_MIRROR.TrimEnd('/') } else { '' }
+    if ($mirror) { "$mirror/$Url" } else { $Url }
+}
 
 # ---------------------------------------------------------------------------
 # 自举：当脚本通过 irm | iex 管道执行时，$PSScriptRoot 为空或无 skills 目录，
@@ -28,9 +46,10 @@ $NzwBranchDefault = 'main'
 function Invoke-Bootstrap {
     $repo   = if ($env:NZW_REPO)   { $env:NZW_REPO }   else { $NzwRepoDefault }
     $branch = if ($env:NZW_BRANCH) { $env:NZW_BRANCH } else { $NzwBranchDefault }
-    $url    = "https://codeload.github.com/$repo/tar.gz/refs/heads/$branch"
+    $url    = Resolve-GhUrl "https://codeload.github.com/$repo/tar.gz/refs/heads/$branch"
 
     Write-Host "▶ 从 GitHub 拉取 nzw-dev-skills ($repo@$branch)..."
+    if ($env:NZW_MIRROR) { Write-Host "  使用镜像：$env:NZW_MIRROR" }
     $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "nzw-install-$(Get-Random)"
     New-Item -ItemType Directory -Force -Path $tmp | Out-Null
     $tarball = Join-Path $tmp 'repo.tar.gz'
