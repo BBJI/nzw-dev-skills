@@ -32,7 +32,7 @@ nzw-dev-skills 是一套 AI 自主全流程交付技能包，以 **Loop Engineer
 ## 各 skill 一句话概要
 
 - **req-analysis-skill**：把模糊想法转化为 PRD + 原型 HTML + 追溯矩阵 + 风险登记表。产出到 `.nds/<req-id>/01-requirements/`。创建新需求时分配 `req-NNN` 并设为 `active_req_id`。
-- **design-skill**：基于需求产出 W3C 标准设计令牌、组件规格、用户流程、高保真 HTML 稿。产出到 `.nds/<req-id>/02-design/`。
+- **design-skill**：基于需求产出 W3C 标准设计令牌、组件规格、用户流程、高保真 HTML 稿。产出到 `.nds/<req-id>/02-design/`。视觉实现层委托 impeccable 引擎（缺失时 `npx impeccable install` 自动安装）：已有项目结合当前页面风格保持一致（identity-preservation），新项目从零设计。
 - **review-skill**：从需求完整性 / UX 可实现性 / 技术可行性三维度评审，产出 Issue/Risk/Decision + 准入签字。产出到 `.nds/<req-id>/03-review/`。
 - **task-allocation-skill**：分解为 INVEST 合格、DAG 依赖、四要素契约的任务树。产出到 `.nds/<req-id>/04-tasks/`。
 - **dev-skill**：TDD 红-绿-重构循环实现任务，Conventional Commits 提交。产出到 `.nds/<req-id>/05-dev/`。

@@ -89,7 +89,7 @@ NZW_REPO=myorg/nzw-fork NZW_CLAUDE_DIR=~/my-claude \
 | 指令 | 作用 | 对应 skill |
 |---|---|---|
 | `/nzw-req <任务描述>` | 需求调研分析 | req-analysis-skill |
-| `/nzw-design` | UI/UX 设计规范 | design-skill |
+| `/nzw-design` | UI/UX 设计规范（视觉实现委托 impeccable，缺失自动安装） | design-skill |
 | `/nzw-review` | 三维实现评估 | review-skill |
 | `/nzw-task` | 任务拆分与排期 | task-allocation-skill |
 | `/nzw-dev [task-id]` | TDD 开发实现 | dev-skill |
