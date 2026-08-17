@@ -73,18 +73,23 @@ fi
 
 TARGET_CLAUDE="${NZW_CLAUDE_DIR:-$HOME/.claude}"
 TARGET_CODEX="${NZW_CODEX_DIR:-$HOME/.codex}"
+TARGET_AGENTS="${NZW_AGENTS_DIR:-$HOME/.agents}"
+TARGET_ZCODE="${NZW_ZCODE_DIR:-$HOME/.zcode}"
 
 INSTALL_CLAUDE=0
 INSTALL_CODEX=0
+INSTALL_ZCODE=0
 if [[ $# -eq 0 ]]; then
   INSTALL_CLAUDE=1
   INSTALL_CODEX=1
+  INSTALL_ZCODE=1
 fi
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --claude-code) INSTALL_CLAUDE=1; shift;;
     --codex)       INSTALL_CODEX=1; shift;;
-    --all)         INSTALL_CLAUDE=1; INSTALL_CODEX=1; shift;;
+    --zcode)       INSTALL_ZCODE=1; shift;;
+    --all)         INSTALL_CLAUDE=1; INSTALL_CODEX=1; INSTALL_ZCODE=1; shift;;
     *) echo "未知参数: $1"; exit 1;;
   esac
 done
@@ -141,8 +146,51 @@ install_codex() {
   echo "  Codex 启动时会自动加载 AGENTS.md，可用自然语言触发各 skill"
 }
 
+install_zcode() {
+  local skills_dir="$TARGET_AGENTS/skills"
+  local commands_dir="$TARGET_AGENTS/commands"
+  local templates_dir="$TARGET_AGENTS/nzw-templates"
+  mkdir -p "$skills_dir" "$commands_dir" "$templates_dir" "$TARGET_ZCODE"
+
+  echo "▶ 安装 skills → $skills_dir"
+  for skill_dir in "$SCRIPT_DIR"/skills/*/; do
+    [[ -d "$skill_dir" ]] || continue
+    name="$(basename "$skill_dir")"
+    rm -rf "$skills_dir/$name"
+    cp -r "$skill_dir" "$skills_dir/$name"
+    echo "  ✓ $name"
+  done
+
+  echo "▶ 安装斜杠命令 → $commands_dir"
+  for cmd_file in "$SCRIPT_DIR"/commands/*.md; do
+    [[ -f "$cmd_file" ]] || continue
+    cp "$cmd_file" "$commands_dir/"
+    echo "  ✓ $(basename "$cmd_file")"
+  done
+
+  echo "▶ 安装 schema/模板 → $templates_dir"
+  for tpl_file in "$SCRIPT_DIR"/templates/*; do
+    [[ -f "$tpl_file" ]] || continue
+    cp "$tpl_file" "$templates_dir/"
+    echo "  ✓ $(basename "$tpl_file")"
+  done
+
+  echo "▶ 生成 ZCode AGENTS.md → $TARGET_ZCODE/AGENTS.md"
+  if [[ -f "$TARGET_ZCODE/AGENTS.md" ]]; then
+    cp "$TARGET_ZCODE/AGENTS.md" "$TARGET_ZCODE/AGENTS.md.bak.$(date +%Y%m%d%H%M%S)"
+    echo "  ⚠ 已备份原 AGENTS.md"
+  fi
+  cp "$SCRIPT_DIR/zcode/AGENTS.md" "$TARGET_ZCODE/AGENTS.md"
+  echo "  ✓ AGENTS.md"
+
+  echo "▶ ZCode 安装完成"
+  echo "  ZCode 原生发现 ~/.agents/skills 与 ~/.agents/commands；~/.zcode/AGENTS.md 是触发索引"
+  echo "  重启 ZCode 或新开会话后，输入 /nzw-status 验证"
+}
+
 if [[ $INSTALL_CLAUDE -eq 1 ]]; then install_claude_code; fi
 if [[ $INSTALL_CODEX   -eq 1 ]]; then install_codex; fi
+if [[ $INSTALL_ZCODE   -eq 1 ]]; then install_zcode; fi
 
 echo ""
 echo "✔ nzw-dev-skills 安装结束"

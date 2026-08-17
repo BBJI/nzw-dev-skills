@@ -25,6 +25,12 @@
     },
     "codex": {
       "agents_file": "~/.codex/AGENTS.md"
+    },
+    "zcode": {
+      "skills_dir": "~/.agents/skills",
+      "commands_dir": "~/.agents/commands",
+      "templates_dir": "~/.agents/nzw-templates",
+      "agents_file": "~/.zcode/AGENTS.md"
     }
   }
 }

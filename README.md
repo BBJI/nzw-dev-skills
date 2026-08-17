@@ -57,15 +57,21 @@ curl -fsSL https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.sh
 ## 本地安装（已 clone 仓库）
 
 ```bash
-./install.sh --all           # macOS / Linux / Git Bash
+./install.sh --all           # macOS / Linux / Git Bash（装 claude-code + codex + zcode）
 .\install.ps1 -Target all    # Windows PowerShell
 ```
 
-支持 `--claude-code` / `--codex` / `--all`（默认 all）。
+支持 `--claude-code` / `--codex` / `--zcode` / `--all`（默认 all）。ZCode 用户可只装 zcode：
+
+```bash
+./install.sh --zcode         # macOS / Linux / Git Bash
+.\install.ps1 -Target zcode  # Windows PowerShell
+```
 
 安装后：
 - Claude Code：skills 装入 `~/.claude/skills/`，斜杠命令装入 `~/.claude/commands/`
 - Codex：合并为 `~/.codex/AGENTS.md`，skill 文档装入 `~/.codex/skills/`
+- ZCode：skills 装入 `~/.agents/skills/`（含 `references/`），斜杠命令装入 `~/.agents/commands/`，schema/模板装入 `~/.agents/nzw-templates/`，触发索引装入 `~/.zcode/AGENTS.md`
 
 ## 环境变量覆盖
 
@@ -76,6 +82,8 @@ curl -fsSL https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.sh
 | `NZW_MIRROR` | GitHub 镜像前缀（国内网络加速，自举下载 tarball 时生效） | 空 |
 | `NZW_CLAUDE_DIR` | Claude Code 安装目录 | `~/.claude` |
 | `NZW_CODEX_DIR` | Codex 安装目录 | `~/.codex` |
+| `NZW_AGENTS_DIR` | ZCode skills/commands 安装目录 | `~/.agents` |
+| `NZW_ZCODE_DIR` | ZCode 触发索引目录 | `~/.zcode` |
 
 示例：从 fork 安装到自定义目录
 
@@ -203,6 +211,7 @@ nzw-dev-skills/
 │   └── workflow-skill/
 ├── commands/               # 11 个斜杠命令（含 nzw-switch）
 ├── codex/                  # Codex 平台 AGENTS.md
+├── zcode/                  # ZCode 平台 AGENTS.md（触发索引）
 └── templates/              # state.schema.json / index.schema.json / handoff.contract.json / progress*.md.template
 ```
 
