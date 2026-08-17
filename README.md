@@ -112,14 +112,14 @@ Codex 无斜杠命令，用自然语言触发即可（如"启动 nzw workflow �
 ├── PROGRESS.md             # 顶层总览看板（多需求）
 ├── 00-instruction/         # 项目级规范（跨需求共享，不进 req 子目录）
 └── req-001/                # 需求 001 独立子树
-    ├── state.json          # 机器态：任务树/进度/决策（跨会话续传核心）
-    ├── PROGRESS.md         # 人类态：单需求可读看板
-    ├── 01-requirements/    # 需求文档 + 原型 + 追溯矩阵 + 风险
-    ├── 02-design/          # 设计令牌 + 组件规格 + 高保真稿
-    ├── 03-review/          # 评审报告 + 决策日志
-    ├── 04-tasks/           # WBS + 任务树 + 排期
-    ├── 05-dev/             # 实现日志 + Bug 修复记录
-    ├── 06-test/            # 测试用例 + 测试结果 + Bug 报告
+    ├── state.json          # 机器态：任务树/进度/决策/events[]事件日志/bug_reflow（跨会话续传核心）
+    ├── PROGRESS.md         # 人类态：单需求可读看板（由 events 渲染）
+    ├── 01-requirements/    # PRD + 双稿原型 + story-map + 追溯矩阵 + 风险 + feature-checklist.json + consistency-check
+    ├── 02-design/          # 设计令牌(W3C DTCG) + 组件规格 + patterns/ + IA + 高保真稿
+    ├── 03-review/          # 评审报告 + 决策日志 + evaluation.json + sign-off
+    ├── 04-tasks/           # WBS + 任务树(METR≤1h) + 排期 + sprint-contracts/
+    ├── 05-dev/             # 实现日志 + Bug 修复记录 + commits
+    ├── 06-test/            # 测试用例 + 结果 + Bug 报告(ISO 29119-3) + 回归集 + exploratory-sessions + spec-drift-check
     └── 07-workflow/        # Loop Engineering 循环日志
 ```
 
@@ -135,6 +135,27 @@ Codex 无斜杠命令，用自然语言触发即可（如"启动 nzw workflow �
 2. 原 `state.json` 移到 `.nds/req-001/state.json`，`project.req_id` 设为 `"req-001"`，`version` 升到 `"1.1"`
 3. 生成 `.nds/index.json`，`active_req_id = "req-001"`
 4. `00-instruction/` 若存在则保留在顶层（项目级共享）
+
+### v1.1 → v1.2 升级（additive，无需手动迁移）
+
+v1.2 完全兼容 v1.1，旧 `.nds/` 无需手动改动。首次加载旧 `state.json`（`version:"1.1"`）时自动补默认空值并升级为 `"1.2"`：
+
+- `events: []`（只追加事件日志，managed-agents 模式）
+- `feedback_loop.bug_reflow: []`（缺陷回流事件流）
+- `project.feature_checklist_ref`（防假绿载体契约路径）
+- `task_tree.tasks[].lock`（任务认领锁）
+- `index.json` 的 `version` 接受 `"1.1"` / `"1.2"`
+
+v1.2 主要新增（详见各 SKILL.md）：
+- **req-analysis**：story-map.md（walking skeleton + MVP 切片）、feature-checklist.json（机器可读，初始全 fail）、consistency-check.md（矛盾/缺口自动检查）、risks 补 Contingency/Trigger、追溯矩阵补 origin/验证状态
+- **design**：patterns/（模式库）、information-architecture.md、组件 States 强制 loading/empty/error/disabled、令牌 `$type` 分组继承 + `$extensions`、标注 W3C DTCG 2025.10 Stable
+- **review**：每条检查给"怎么查"客观信号、DoR 准入门、三维 sign-off 各自结果、evaluation.json 硬阈值评分（怀疑式评估器）
+- **task-allocation**：METR ≤1h 任务红线、单体任务预言机分解、git 文件锁、Sprint Contract
+- **dev**：测试即不可变契约（feature-checklist + 冻结测试 + 只改 passes 字段防假绿）、AI-TDD 失败模式、快采样回归、一次一 feature
+- **test**：exploratory-sessions.md（charter + SBTM）、ISO/IEC/IEEE 29119-3:2013、Gherkin 反模式、e2e（web-gui-tester）、属性测试、spec 漂移检测（converge）
+- **instruction**：2026 工具全景（Cursor MDC / Codex AGENTS.md 合并链 / Copilot AGENTS.md 原生 / Windsurf）、steering 文件、规范即转移条件
+- **workflow**：会话启动协议（resume 强制例程）、events[] 事件日志、bug_reflow 事件流、受约束子 agent、harness 压测注
+- **写法**：全部 skill 按 skill-creator 原则打磨——DRY（impeccable 抽到 `references/`）、渐进式披露、MUST 改解释 why、description pushy 化
 
 ## 跨会话续传
 
@@ -169,7 +190,11 @@ nzw-dev-skills/
 ├── install.sh / .ps1       # 一键安装
 ├── skills/                 # 8 个 skill
 │   ├── req-analysis-skill/
+│   │   ├── SKILL.md
+│   │   └── references/impeccable-wireframe.md   # 渐进式披露：impeccable 集成指南
 │   ├── design-skill/
+│   │   ├── SKILL.md
+│   │   └── references/impeccable-design.md
 │   ├── review-skill/
 │   ├── task-allocation-skill/
 │   ├── dev-skill/
@@ -178,16 +203,18 @@ nzw-dev-skills/
 │   └── workflow-skill/
 ├── commands/               # 11 个斜杠命令（含 nzw-switch）
 ├── codex/                  # Codex 平台 AGENTS.md
-└── templates/              # state.schema.json / index.schema.json / progress*.md.template
+└── templates/              # state.schema.json / index.schema.json / handoff.contract.json / progress*.md.template
 ```
 
 ## 设计原则
 
-1. **精简且精准**：每个 SKILL.md < 300 行，只写必要的「为什么」与「怎么做」。
-2. **状态机驱动**：所有阶段产物落入 `.nds/<req-id>/`，`state.json` 是唯一真源；顶层 `index.json` 管理多需求。
-3. **契约化**：阶段间通过文件契约交接，不依赖对话上下文。
-4. **人在环**：关键决策点必须等用户签字，AI 不擅自推进。
-5. **可恢复**：任何阶段崩溃都能从 `state.json` 接续。
+1. **精简且精准 + 渐进式披露**：SKILL.md body < 500 行只留工作流骨架与「为什么」，大段细节（impeccable 集成指南、模板长文）拆到 `references/` 按需加载；description 是触发信号，pushy 化覆盖同义/隐式场景。
+2. **状态机驱动 + 事件日志**：所有阶段产物落入 `.nds/<req-id>/`，`state.json`（含 `events[]` 只追加事件日志）是唯一真源；顶层 `index.json` 管理多需求。
+3. **契约化**：阶段间通过文件契约 + Sprint Contract 交接，不依赖对话上下文。
+4. **测试即 spec**：feature-checklist.json 是 dev/test 共享的防假绿契约；测试冻结，只改 passes 字段。
+5. **人在环**：关键决策点（review sign-off）必须等用户签字，AI 不擅自推进。
+6. **客观信号**：门禁用真实测试/lint/编译输出，不依赖自评。
+7. **可恢复**：任何阶段崩溃走会话启动协议从 `events[]` + checkpoint 接续。
 
 ## 许可
 

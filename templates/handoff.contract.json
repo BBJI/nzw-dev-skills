@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$description": "Sprint Contract 模板 —— 每阶段编码前协商的交接契约（Anthropic 长跑 harness 模式）。明确输入 artifact、输出 artifact、验收门禁（客观信号 + 是否需人工签字）、回退点。落到 .nds/<req-id>/<phase>/handoff.json，由阶段开始时填写、结束时校验。",
+  "title": "NZW Sprint Contract",
+  "type": "object",
+  "required": ["phase", "inputs", "outputs", "gate", "rollback"],
+  "properties": {
+    "phase": { "type": "string", "enum": ["requirements", "design", "review", "tasks", "dev", "test", "instruction"] },
+    "inputs": {
+      "type": "array",
+      "description": "上游必须就绪的 artifact 路径（相对 .nds/<req-id>/）",
+      "items": { "type": "string" }
+    },
+    "outputs": {
+      "type": "array",
+      "description": "本阶段必须产出的 artifact 路径，门禁逐项校验存在性与完整性",
+      "items": { "type": "string" }
+    },
+    "gate": {
+      "type": "object",
+      "description": "验收门禁：客观信号清单自动放行 + 人工签字点强制等",
+      "required": ["objective_signals"],
+      "properties": {
+        "objective_signals": {
+          "type": "array",
+          "description": "客观信号：测试/lint/编译/evaluator 阈值/文件完整性。每条含命令与期望",
+          "items": {
+            "type": "object",
+            "properties": {
+              "check": { "type": "string", "description": "检查项描述" },
+              "cmd": { "type": "string", "description": "可执行命令（可选，非命令式检查留空）" },
+              "expect": { "type": "string", "description": "期望结果（exit 0 / 含某字符串 / 文件存在等）" }
+            }
+          }
+        },
+        "needs_human_signoff": { "type": "boolean", "description": "是否强制人工签字（review 阶段为 true）" },
+        "signoff_path": { "type": "string", "description": "签字文件路径，如 03-review/sign-off.md" }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "description": "回退点：门禁失败时回退到最近通过的 checkpoint",
+      "properties": {
+        "git_commit": { "type": "string", "description": "阶段开始前的 git commit sha（回退锚点）" },
+        "revert_to_phase": { "type": "string", "description": "失败时回流到的上游阶段" }
+      }
+    },
+    "estimated_hours": { "type": "number", "description": "本阶段预估工时（人类等价），参考 METR ≤1h/任务红线" }
+  }
+}

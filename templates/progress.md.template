@@ -37,5 +37,13 @@
 - **{{id}}** [{{phase}}] {{decision}} — _{{rationale}}_
 {{/each}}
 
+## 最近事件（v1.2 事件日志，最近 5 条）
+
+{{#each recent_events}}
+- `#{{seq}}` [{{type}}] {{summary}} _({{timestamp}})_
+{{/each}}
+
 ## 续传提示
 {{resume_hint}}
+
+> resume 时优先重放 `state.json` 的 `events[]` 最近 5 条快速恢复上下文，resume_hint 作为补充。

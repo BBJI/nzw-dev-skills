@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "NZW Dev Skills 需求索引文件",
-  "description": "顶层 .nds/index.json —— 列出项目内所有需求，指向活跃需求。v1.1 引入。",
+  "description": "顶层 .nds/index.json —— 列出项目内所有需求，指向活跃需求。v1.1 引入；v1.2 起兼容 1.1/1.2（1.2 含 events/bug_reflow 等，详见 state.schema）。",
   "type": "object",
   "required": ["version", "project_root", "active_req_id", "requirements"],
   "properties": {
-    "version": { "const": "1.1" },
+    "version": { "enum": ["1.1", "1.2"] },
     "project_root": { "type": "string", "description": "用户项目根绝对路径" },
     "active_req_id": {
       "type": "string",
