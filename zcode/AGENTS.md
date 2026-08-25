@@ -1,7 +1,7 @@
-# AGENTS.md — nzw-dev-skills for OpenAI Codex
+# AGENTS.md — nzw-dev-skills for ZCode
 
-> 这是 **nzw-dev-skills** 技能包在 Codex 平台的入口。Codex 没有原生 skill 机制，本文件作为统一索引，让 Codex 通过自然语言识别触发对应技能。
-> 各技能详细说明位于 `~/.codex/skills/<skill-name>/SKILL.md`，按需读取。
+> 这是 **nzw-dev-skills** 技能包在 ZCode 平台的用户级全局指令。ZCode 原生支持 skill 自动发现（skills 已安装于 `~/.agents/skills/`，斜杠命令安装于 `~/.agents/commands/`）；本文件作为统一触发索引与执行约定，让 ZCode 在任意工作区都能正确识别并按规范触发对应技能。
+> 各技能详细说明位于 `~/.agents/skills/<skill-name>/SKILL.md`，由 ZCode skill 机制按需加载；JSON schema 与进度模板位于 `~/.agents/nzw-templates/`。
 
 ## 项目背景
 
@@ -15,19 +15,21 @@ nzw-dev-skills 是一套 AI 自主全流程交付技能包，以 **Loop Engineer
 
 ## 触发指南
 
-当用户输入符合下列任一模式时，请读取对应 skill 的 SKILL.md 并按其指引执行。
+当用户输入符合下列任一模式时，请触发对应 skill（通过 ZCode skill 机制加载其 SKILL.md 并按其指引执行）。也可直接使用对应斜杠命令。
 
-| 触发关键词 | 对应 skill | SKILL.md 路径 |
-|---|---|---|
-| 需求分析 / PRD / 需求文档 / 梳理需求 | req-analysis-skill | ~/.codex/skills/req-analysis-skill/SKILL.md |
-| UI 设计 / UX 设计 / 设计规范 / 设计令牌 | design-skill | ~/.codex/skills/design-skill/SKILL.md |
-| 评审 / 可行性 / 准入 / 三维评审 | review-skill | ~/.codex/skills/review-skill/SKILL.md |
-| 任务拆分 / WBS / 排期 / 看板 | task-allocation-skill | ~/.codex/skills/task-allocation-skill/SKILL.md |
-| 开发 / 实现 / 写代码 / 修 bug / TDD | dev-skill | ~/.codex/skills/dev-skill/SKILL.md |
-| 测试 / 验收 / 缺陷 / 回归 | test-skill | ~/.codex/skills/test-skill/SKILL.md |
-| 生成规范 / CLAUDE.md / AGENTS.md / cursorrules | instruction-skill | ~/.codex/skills/instruction-skill/SKILL.md |
-| 全流程 / 端到端 / 做个 XXX / 自主交付 | workflow-skill | ~/.codex/skills/workflow-skill/SKILL.md |
-| 续传 / 接着上次 / resume | 读取 .nds/index.json + state.json | 见下方"续传"段落 |
+| 触发关键词 | 对应 skill | 斜杠命令 | SKILL.md 路径 |
+|---|---|---|---|
+| 需求分析 / PRD / 需求文档 / 梳理需求 | req-analysis-skill | `/nzw-req` | ~/.agents/skills/req-analysis-skill/SKILL.md |
+| UI 设计 / UX 设计 / 设计规范 / 设计令牌 | design-skill | `/nzw-design` | ~/.agents/skills/design-skill/SKILL.md |
+| 评审 / 可行性 / 准入 / 三维评审 | review-skill | `/nzw-review` | ~/.agents/skills/review-skill/SKILL.md |
+| 任务拆分 / WBS / 排期 / 看板 | task-allocation-skill | `/nzw-task` | ~/.agents/skills/task-allocation-skill/SKILL.md |
+| 开发 / 实现 / 写代码 / 修 bug / TDD | dev-skill | `/nzw-dev` | ~/.agents/skills/dev-skill/SKILL.md |
+| 测试 / 验收 / 缺陷 / 回归 | test-skill | `/nzw-test` | ~/.agents/skills/test-skill/SKILL.md |
+| 生成规范 / CLAUDE.md / AGENTS.md / cursorrules | instruction-skill | `/nzw-instruction` | ~/.agents/skills/instruction-skill/SKILL.md |
+| 全流程 / 端到端 / 做个 XXX / 自主交付 | workflow-skill | `/nzw-workflow` | ~/.agents/skills/workflow-skill/SKILL.md |
+| 续传 / 接着上次 / resume | 读取 .nds/index.json + state.json | `/nzw-resume` | 见下方"续传"段落 |
+| 看进度 / 状态 | 读取 .nds/PROGRESS.md | `/nzw-status` | — |
+| 切换活跃需求 | 修改 .nds/index.json | `/nzw-switch` | — |
 
 ## 各 skill 一句话概要
 
@@ -46,7 +48,7 @@ nzw-dev-skills 是一套 AI 自主全流程交付技能包，以 **Loop Engineer
 
 1. **状态机驱动**：执行前读 `.nds/index.json` 确定 `active_req_id`（或用户显式指定的 `--req`），再读 `.nds/<req-id>/state.json`；执行后更新 `current_phase` / `phases.<phase>.status` / `resume_hint`，**向 `events[]` append 一条事件**，同步刷新 `.nds/<req-id>/PROGRESS.md`、顶层 `.nds/PROGRESS.md` 与 `index.json` 中该 req 的摘要。
 2. **目录契约**：各 skill 产出严格落入 `.nds/<req-id>/<编号-阶段名>/` 目录，不跨界；instruction-skill 例外，落到顶层 `.nds/00-instruction/`。
-3. **JSON+Markdown 双层**：机器态用 `index.json` + 每 req 的 `state.json`（含 `events[]` 事件日志），人类态用顶层与各 req 的 `PROGRESS.md`（由事件日志渲染），三者保持同步。
+3. **JSON+Markdown 双层**：机器态用 `index.json` + 每 req 的 `state.json`（schema 见 `~/.agents/nzw-templates/index.schema.json` 与 `state.schema.json`，含 `events[]` 事件日志），人类态用顶层与各 req 的 `PROGRESS.md`（按 `~/.agents/nzw-templates/progress*.md.template` 渲染，由事件日志渲染），三者保持同步。
 4. **人在环**：review 阶段必须等用户在 `.nds/<req-id>/03-review/sign-off.md` 签字才能进入开发（唯一强制人工卡点）。
 5. **客观信号**：test/dev 阶段的 Observe 必须用真实测试/lint/编译输出，不依赖自评。
 6. **跨会话续传**：任何阶段都可暂停，下次对话走「会话启动协议」接续。
@@ -80,16 +82,21 @@ nzw-dev-skills 是一套 AI 自主全流程交付技能包，以 **Loop Engineer
 
 ## 安装与卸载
 
-- 安装：运行 `install.sh --codex` 或 `install.ps1 -Target codex`
-- 卸载：删除 `~/.codex/AGENTS.md` 与 `~/.codex/skills/` 即可
-- 更新：重新运行安装脚本，会自动备份原 AGENTS.md
+- 安装位置（ZCode 用户级，跨工作区生效）：
+  - skills：`~/.agents/skills/`（8 个 `*-skill` 目录，含 `references/`）
+  - commands：`~/.agents/commands/`（11 个 `nzw-*.md`）
+  - templates：`~/.agents/nzw-templates/`（schema + 进度模板 + handoff.contract.json）
+  - 全局指令：`~/.zcode/AGENTS.md`（本文件）
+- 安装：`./install.sh --zcode`（macOS/Linux/Git Bash）或 `.\install.ps1 -Target zcode`（Windows PowerShell），或一行远程安装见 README
+- 卸载：删除上述目录与文件即可
+- 更新：重新运行安装脚本覆盖
 
 ## 维护
 
 - 源仓库：https://github.com/BBJI/nzw-dev-skills
 - 修改 skill 内容：编辑 `skills/<skill-name>/SKILL.md`（及其 `references/`）后重新运行安装脚本
 - 修改触发关键词：编辑本文件 `## 触发指南` 段落
-- 修改 schema/模板：编辑 `templates/` 下对应文件
+- 修改 schema/模板：编辑 `~/.agents/nzw-templates/` 下对应文件（源在仓库 `templates/`）
 
 ---
 

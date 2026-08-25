@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "NZW Dev Skills 任务状态文件",
-  "description": "跨会话续传的核心状态文件，存于用户项目根 .nds/req-<id>/state.json（v1.1 起按需求隔离）",
+  "description": "跨会话续传的核心状态文件，存于用户项目根 .nds/req-<id>/state.json。v1.2 起 state.json 同时是覆盖式快照与只追加事件日志（managed-agents 模式）：events[] 记录关键事件，brain 崩溃后新会话用 wake(req_id) 重放最近事件恢复上下文。",
   "type": "object",
   "required": ["version", "project", "phases", "task_tree", "decisions", "feedback_loop", "resume_hint"],
   "properties": {
-    "version": { "const": "1.1" },
+    "version": { "enum": ["1.1", "1.2"], "description": "1.2 = 含 events/bug_reflow/task.lock/feature_checklist_ref；1.1 文件首次加载时自动升级为 1.2（补默认空数组），不破坏旧 .nds/" },
     "project": {
       "type": "object",
       "required": ["req_id", "name", "created_at", "updated_at", "current_phase"],
@@ -19,7 +19,8 @@
           "type": "string",
           "enum": ["init", "requirements", "design", "review", "tasks", "dev", "test", "done"]
         },
-        "last_checkpoint_at": { "type": "string", "format": "date-time" }
+        "last_checkpoint_at": { "type": "string", "format": "date-time" },
+        "feature_checklist_ref": { "type": "string", "description": "v1.2：指向 .nds/<req-id>/01-requirements/feature-checklist.json，机器可读 feature 列表（初始全 fail），dev/test 翻转 passes 字段——防假绿的载体契约" }
       }
     },
     "phases": {
@@ -51,6 +52,19 @@
               "status": { "type": "string", "enum": ["todo", "doing", "review", "blocked", "done"] },
               "depends_on": { "type": "array", "items": { "type": "string" } },
               "assignee": { "type": "string" },
+              "context_files": { "type": "array", "items": { "type": "string" }, "description": "四要素之一：上下文文件（PRD 段落/组件规格/API 契约）" },
+              "input_contract": { "type": "string", "description": "四要素之二：输入契约" },
+              "output_contract": { "type": "string", "description": "四要素之三：输出契约（可测验收点）" },
+              "verification_cmd": { "type": "string", "description": "四要素之四：验证命令" },
+              "estimate_hours": { "type": "number", "description": "v1.2：人类等价预估工时，METR 红线 ≤ 1h（>1h 触发预言机分解）" },
+              "lock": {
+                "type": ["object", "null"],
+                "description": "v1.2：任务认领锁（git 文件锁模式），防并行 dev 撞车。null=未认领",
+                "properties": {
+                  "claimant": { "type": "string", "description": "认领者标识（agent 会话 id 或人）" },
+                  "claimed_at": { "type": "string", "format": "date-time" }
+                }
+              },
               "artifacts": { "type": "array", "items": { "type": "string" } },
               "bug_ids": { "type": "array", "items": { "type": "string" } },
               "started_at": { "type": "string" },
@@ -69,7 +83,7 @@
           "id": { "type": "string", "pattern": "^D\\d{3}$" },
           "phase": { "type": "string" },
           "decision": { "type": "string" },
-          "rationale": { "type": "string" },
+          "rationale": { "type": "string", "description": "记\"为什么不选 B\"比\"选了 A\"更有长期价值" },
           "timestamp": { "type": "string", "format": "date-time" }
         }
       }
@@ -92,12 +106,43 @@
               "summary": { "type": "string" }
             }
           }
+        },
+        "bug_reflow": {
+          "type": "array",
+          "description": "v1.2：bug→dev 事件流，机器可驱动的缺陷回流闭环。Blocker/Critical bug 自动生成 dev 子任务",
+          "items": {
+            "type": "object",
+            "required": ["bug_id", "triggered_at", "status"],
+            "properties": {
+              "bug_id": { "type": "string", "pattern": "^B\\d{3}$" },
+              "task_id": { "type": "string", "description": "回流触发的 dev 任务 id（新建或复用）" },
+              "triggered_at": { "type": "string", "format": "date-time" },
+              "resolved_at": { "type": ["string", "null"], "format": "date-time" },
+              "status": { "type": "string", "enum": ["triggered", "in_fix", "retest", "closed"] }
+            }
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "description": "v1.2：只追加事件日志（managed-agents Brain/Hands/Session 模式）。每个 skill 在关键节点 append 一条；resume 时重放最近 N 条快速恢复上下文。绝不删除/覆盖历史事件。",
+      "items": {
+        "type": "object",
+        "required": ["seq", "type", "timestamp"],
+        "properties": {
+          "seq": { "type": "integer", "description": "单调递增序号" },
+          "type": { "type": "string", "enum": ["phase_start", "phase_done", "phase_blocked", "gate_passed", "gate_failed", "task_claimed", "task_done", "bug_found", "bug_fixed", "decision", "spec_drift", "human_signoff", "compaction"] },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "phase": { "type": "string" },
+          "summary": { "type": "string", "description": "人类可读的一句话摘要" },
+          "ref": { "type": "string", "description": "关联实体 id（task/bug/decision/文件路径）" }
         }
       }
     },
     "resume_hint": {
       "type": "string",
-      "description": "下次对话接续工作的简短指引，由每个 skill 完成后更新"
+      "description": "下次对话接续工作的简短指引，由每个 skill 完成后更新。v1.2 起 resume 优先重放 events[] 最近 5 条，resume_hint 作为补充"
     }
   },
   "definitions": {

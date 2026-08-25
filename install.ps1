@@ -2,7 +2,7 @@
 .SYNOPSIS
   nzw-dev-skills 一键安装脚本（Windows PowerShell）
 .PARAMETER Target
-  claude-code | codex | all（默认 all）
+  claude-code | codex | zcode | all（默认 all）
 .EXAMPLE
   # 本地执行
   .\install.ps1 -Target all
@@ -14,7 +14,7 @@
   & ([scriptblock]::Create((Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/BBJI/nzw-dev-skills/main/install.ps1').Content.TrimStart([char]0xFEFF))) -Target all
 #>
 param(
-    [ValidateSet('claude-code','codex','all')]
+    [ValidateSet('claude-code','codex','zcode','all')]
     [string]$Target = 'all'
 )
 
@@ -100,6 +100,8 @@ if (-not $scriptHasSkills) {
 $ScriptDir = $PSScriptRoot
 $ClaudeDir = if ($env:NZW_CLAUDE_DIR) { $env:NZW_CLAUDE_DIR } else { Join-Path $HOME '.claude' }
 $CodexDir  = if ($env:NZW_CODEX_DIR)  { $env:NZW_CODEX_DIR  } else { Join-Path $HOME '.codex'  }
+$AgentsDir = if ($env:NZW_AGENTS_DIR) { $env:NZW_AGENTS_DIR } else { Join-Path $HOME '.agents' }
+$ZcodeDir  = if ($env:NZW_ZCODE_DIR)  { $env:NZW_ZCODE_DIR  } else { Join-Path $HOME '.zcode'  }
 
 Write-Host "▶ nzw-dev-skills 安装开始 (源: $ScriptDir)"
 
@@ -146,8 +148,46 @@ function Install-Codex {
     Write-Host "▶ Codex 安装完成（Codex 启动时自动加载 AGENTS.md，可用自然语言触发）"
 }
 
+function Install-ZCode {
+    $skillsDir   = Join-Path $AgentsDir 'skills'
+    $commandsDir = Join-Path $AgentsDir 'commands'
+    $templatesDir = Join-Path $AgentsDir 'nzw-templates'
+    New-Item -ItemType Directory -Force -Path $skillsDir,$commandsDir,$templatesDir,$ZcodeDir | Out-Null
+
+    Write-Host "▶ 安装 skills → $skillsDir"
+    Get-ChildItem -Path (Join-Path $ScriptDir 'skills') -Directory | ForEach-Object {
+        $dest = Join-Path $skillsDir $_.Name
+        if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+        Copy-Item -Recurse $_.FullName $dest
+        Write-Host "  ✓ $($_.Name)"
+    }
+
+    Write-Host "▶ 安装斜杠命令 → $commandsDir"
+    Get-ChildItem -Path (Join-Path $ScriptDir 'commands') -Filter *.md | ForEach-Object {
+        Copy-Item $_.FullName (Join-Path $commandsDir $_.Name) -Force
+        Write-Host "  ✓ $($_.Name)"
+    }
+
+    Write-Host "▶ 安装 schema/模板 → $templatesDir"
+    Get-ChildItem -Path (Join-Path $ScriptDir 'templates') -File | ForEach-Object {
+        Copy-Item $_.FullName (Join-Path $templatesDir $_.Name) -Force
+        Write-Host "  ✓ $($_.Name)"
+    }
+
+    $agentsFile = Join-Path $ZcodeDir 'AGENTS.md'
+    if (Test-Path $agentsFile) {
+        $stamp = Get-Date -Format 'yyyyMMddHHmmss'
+        Copy-Item $agentsFile "$agentsFile.bak.$stamp"
+        Write-Host "  ⚠ 已备份原 AGENTS.md"
+    }
+    Copy-Item (Join-Path $ScriptDir 'zcode\AGENTS.md') $agentsFile -Force
+    Write-Host "  ✓ AGENTS.md"
+    Write-Host "▶ ZCode 安装完成（ZCode 原生发现 ~/.agents/skills 与 ~/.agents/commands；~/.zcode/AGENTS.md 是触发索引；重启 ZCode 或新开会话后 /nzw-status 验证）"
+}
+
 if ($Target -in @('claude-code','all')) { Install-ClaudeCode }
 if ($Target -in @('codex','all'))       { Install-Codex }
+if ($Target -in @('zcode','all'))       { Install-ZCode }
 
 Write-Host ""
 Write-Host "✔ nzw-dev-skills 安装结束"
