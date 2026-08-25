@@ -1,7 +1,7 @@
 {
   "name": "nzw-dev-skills",
-  "version": "1.2.0",
-  "description": "AI 自主全流程交付技能包（需求→设计→评审→任务→开发→测试→规范），支持 Claude Code 与 Codex。v1.1 起按需求隔离工作目录；v1.2 起 events[] 事件日志 + bug_reflow 缺陷回流 + feature-checklist 防假绿 + 会话启动协议 + METR ≤1h 任务红线 + spec 漂移检测，兼容 v1.1。",
+  "version": "1.3.0",
+  "description": "AI 自主全流程交付技能包（需求→设计→评审→任务→开发→测试→规范），支持 Claude Code 与 Codex。v1.1 起按需求隔离工作目录；v1.2 起 events[] 事件日志 + bug_reflow 缺陷回流 + feature-checklist 防假绿 + 会话启动协议 + METR ≤1h 任务红线 + spec 漂移检测；v1.3 起 req-analysis 支持项目风格扫描（原型与项目实际风格一致）、原型截图与飞书可导入 docx 导出。兼容 v1.1/v1.2。",
   "author": "nzw",
   "skills": [
     { "id": "req-analysis-skill", "name": "req-analysis", "trigger": "/nzw-req", "phase": "requirements" },

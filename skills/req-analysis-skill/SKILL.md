@@ -1,6 +1,6 @@
 ---
 name: req-analysis-skill
-description: 需求调研分析技能，把模糊想法转化为可追溯、可验证、持续演进的结构化需求工件（PRD + 双稿原型 + 故事地图 + 追溯矩阵 + 风险登记 + 机器可读 feature 清单），作为后续设计/评审/开发/测试的唯一真源。当用户提到以下任一场景时务必使用：需求分析、需求调研、需求梳理、需求文档、PRD 编写、功能需求、非功能需求、干系人分析、需求分解、梳理需求，或任何需要将模糊想法/功能请求转化为严谨结构化需求文档的场景。即使用户没明说"需求"，只要想在实际开发前先明确"系统该做什么"就应触发。不适用于纯调研/选型（那用通用搜索）或已签准进入设计之后（那用 design-skill）。
+description: 需求调研分析技能，把模糊想法转化为可追溯、可验证、持续演进的结构化需求工件（PRD + 双稿原型 + 原型截图 + 飞书可导入 docx + 故事地图 + 追溯矩阵 + 风险登记 + 机器可读 feature 清单），作为后续设计/评审/开发/测试的唯一真源。当用户提到以下任一场景时务必使用：需求分析、需求调研、需求梳理、需求文档、PRD 编写、功能需求、非功能需求、干系人分析、需求分解、梳理需求、导出飞书文档，或任何需要将模糊想法/功能请求转化为严谨结构化需求文档的场景。即使用户没明说"需求"，只要想在实际开发前先明确"系统该做什么"就应触发。不适用于纯调研/选型（那用通用搜索）或已签准进入设计之后（那用 design-skill）。
 metadata:
   type: nzw-dev-skills
   phase: requirements
@@ -23,12 +23,18 @@ metadata:
 - `PRD.md` — 需求文档主体（8 段）
 - `prototype.html` — 精致线框（HTML，**真源**）
 - `preview.html` — impeccable 高保真氛围预览（HTML，**参考**，不锁定视觉决策）
+- `style-snapshot.md` / `style-snapshot.json` — 项目风格快照（已有项目时由 `scripts/scan_style.py` 产出：设计令牌及来源文件，原型风格对齐依据）
+- `shots.json` — 截图清单（原型页面 → 截图任务映射）
+- `screenshots/` — 原型页面 PNG 截图（2x，嵌入 PRD 附录与 docx）
+- `PRD.docx` — 飞书可导入文档（截图内嵌，最终导出）
 - `story-map.md` — 用户故事地图（walking skeleton + MVP 切片，喂给 task-allocation）
 - `traceability-matrix.md` — 追溯矩阵（需求 ↔ 目标 ↔ Story ↔ 验收点 ↔ 设计帧 ↔ 测试用例）
 - `risks.md` — 风险登记表（含 Trigger / Contingency）
 - `glossary.md` — 术语表
 - `feature-checklist.json` — 机器可读 feature 清单（初始全 fail，dev/test 翻转 passes——防假绿载体）
 - `consistency-check.md` — 矛盾/缺口自动检查结果（喂给 review-skill）
+
+`<skill-dir>` 指本技能安装目录（如 `~/.agents/skills/req-analysis-skill`），下文脚本命令以此指代。
 
 入口动作：
 1. 读取或初始化 `.nds/index.json`：不存在 → 初始化 `requirements: []` / `active_req_id: null`；新需求 → 生成下一编号 `req-NNN`（三位补零）追加并设为 `active_req_id`，创建子目录；续作 → 用 `--req <id>` 或 `index.active_req_id`。
@@ -45,6 +51,7 @@ metadata:
 - **先问题后方案**：在描述功能前先明确"用户要完成的 Job 是什么"和"当前为什么做不到"。
 - **Continuous Discovery**：需求是持续活动，PRD 是 living document，不一次性锁死。
 - **可追溯是底线**：每条需求从来源到验收点双向链接。
+- **已有项目风格保真**：目标项目存在设计系统时，先扫源码提取真实令牌（style-snapshot，带出处），原型对齐项目实际风格而非凭空发明视觉；新项目才走从零设计。
 - **结构与氛围分离**：原型层只回答"系统有什么、用户怎么走"，不回答"产品长什么样"——视觉决策留给 design-skill。但"不回答视觉"不等于"可以丑"：用 impeccable 的排版/间距/布局纪律让线框专业可读，另出一份高保真氛围稿帮助干系人感知产品气质。双稿并存的四条权威依据见 `references/impeccable-wireframe.md`。
 
 ## 执行流程
@@ -60,19 +67,21 @@ metadata:
 
 ```markdown
 # {{项目名}} PRD
-## 元数据（版本/日期/作者/状态）
+## 元数据（版本/日期/作者/状态/评审人）
 ## 1. 问题陈述（用户是谁、要完成的 Job、当前为什么做不到、本项目目标）
-## 2. 目标与成功指标（North Star Metric / OKR 1O+2-3KR / Non-goals 显式列出）
+## 2. 目标与成功指标（North Star Metric / OKR 1O+2-3KR / 护栏指标——不可劣化的约束如错误率、耗时 / Non-goals 显式列出）
 ## 3. 用户与场景（Persona / User Story Mapping 骨架 / 关键用户旅程）
 ## 4. 功能需求（按 MoSCoW 优先级）
-  每条 Story：ID F00x / 作为<角色>我希望<动作>以便<价值> / 验收标准 Given-When-Then（至少 1 条可测）/ 优先级 Must-Should-Could-Won't / 来源 / use case 一句话
-## 5. 非功能需求（性能/安全/可用性/可访问性 WCAG 2.2 AA/可观测性/兼容性——即使"暂无特殊要求"也要显式写出）
-## 6. 技术约束（技术栈倾向/依赖/集成接口/部署环境）
+  每条 Story：ID F00x / 作为<角色>我希望<动作>以便<价值> / 验收标准 Given-When-Then（至少 1 条可测）/ 边界与异常（空状态、超长输入、重复提交、权限不足——每条 Must 级 Story 必填）/ 优先级 Must-Should-Could-Won't / 来源 / use case 一句话
+## 5. 非功能需求（性能/安全/可用性/可访问性 WCAG 2.2 AA/可观测性/兼容性/埋点与数据上报——支撑第 2 段成功指标度量的事件清单；即使"暂无特殊要求"也要显式写出）
+## 6. 技术约束与依赖（技术栈倾向/依赖项/集成接口/部署环境/未被验证但影响方案的假设——假设要在 risks.md 登记对应风险）
 ## 7. 开放问题与风险（指向 risks.md）
 ## 8. 变更日志（版本/日期/变更/影响——任何修改走日志，不删历史版本）
+## 附录 A：原型页面截图（screenshots/ 逐页引用，供 docx 导出内嵌；可选）
 ```
 
 > 为什么 Non-goals 与 NFR 必写：明确"不做什么"比"做什么"更能防止范围蔓延；NFR 省略会让性能/安全/可访问性在开发后期才暴露，修复成本是需求阶段的 10-100 倍（Shift-Left Quality）。
+> 为什么每条 Must 级 Story 必填边界与异常：异常路径是需求的一部分而非实现细节——Atlassian/ProductPlan 的 PRD 实践均把假设与边界显式化列为防止后期返工的第一手段；验收标准（GWT）应至少覆盖一条异常路径。
 
 ### 3. 用户故事地图（story-map.md，一等产物）
 
@@ -95,11 +104,45 @@ metadata:
 
 ### 4. 原型 HTML（双稿）
 
-进入前先读 `references/impeccable-wireframe.md`。两稿要求：
+**4.0 项目风格扫描（进入原型前，一次）**：先跑风格扫描脚本判定分支并提取令牌（替代人工目测扫描）：
+
+```bash
+MSYS_NO_PATHCONV=1 python <skill-dir>/scripts/scan_style.py \
+  --project . --output .nds/<req-id>/01-requirements
+```
+
+产出 `style-snapshot.md/.json`：`branch: existing`（已有项目——令牌带来源文件与置信度，AI 按报告"复核清单"抽查 1-2 个真实页面并补写"布局模式"段）或 `branch: new`（新项目——走 2-B 分支，不依赖快照）。已有项目分支中：
+
+- `prototype.html` 的**字体与间距尺度**取自快照（配色仍压灰度，不在 req 阶段锁定品牌色应用方式）
+- `preview.html` 复用的既有令牌**以快照为准**（含双主色并存时的归属确认），不得引入与原项目冲突的新令牌
+
+随后读 `references/impeccable-wireframe.md`（impeccable 前置已在入口动作完成）。两稿要求：
 
 - **`prototype.html`（真源）**：单文件 HTML 内联 CSS；精致线框灰度调色板；覆盖主用户流 3-5 个关键页面；每页顶部标对应 Story ID；含交互注释；字段用真实业务名（不用 Lorem ipsum）。
-- **`preview.html`（参考）**：由 impeccable `/impeccable craft` 产出；覆盖与 prototype.html 相同页面（一一对应不得增删）；顶部固定 banner 标注「⚠️ 氛围参考，非最终设计——视觉决策以 design 阶段为准」；已有项目分支复用既有令牌与组件 API；新项目分支按 impeccable 新项目规则从零设计；过 `/impeccable critique` + `/impeccable audit` 自检，评分写入 PRD「开放问题与风险」段。
+- **`preview.html`（参考）**：由 impeccable `/impeccable craft` 产出；覆盖与 prototype.html 相同页面（一一对应不得增删）；顶部固定 banner 标注「⚠️ 氛围参考，非最终设计——视觉决策以 design 阶段为准」；已有项目分支复用快照确认的既有令牌与组件 API；新项目分支按 impeccable 新项目规则从零设计；过 `/impeccable critique` + `/impeccable audit` 自检，评分写入 PRD「开放问题与风险」段。
+- **页面容器约定（为截图服务）**：两稿每个页面区块的外层容器加 `id="page-<名称>"`，且两稿 id 一一对应（详见 `references/screenshots-docx.md`）。
 - **降级**：impeccable 安装失败时仅产出 prototype.html，跳过 preview.html，PRD 顶部注明。
+
+### 4.5 原型截图（screenshots/）
+
+双稿完成后，按 `references/screenshots-docx.md` 执行：
+
+1. 在 `01-requirements/` 写 `shots.json` 截图清单（每个原型页面至少一条 selector 截图，两稿都覆盖）
+2. 首次使用先 `cd <skill-dir>/scripts && npm install`（Puppeteer）
+3. 执行 `node <skill-dir>/scripts/screenshot.mjs`，逐张验证 `screenshots/*.png` 完整（非空白/非报错页），失败修复重跑
+4. 在 PRD.md 末尾追加「附录 A：原型页面截图」逐页引用截图
+
+### 4.6 飞书可导入 Docx 导出（PRD.docx）
+
+截图完成后，按 `references/screenshots-docx.md` 执行：
+
+```bash
+MSYS_NO_PATHCONV=1 python <skill-dir>/scripts/md_to_docx.py \
+  --input .nds/<req-id>/01-requirements/PRD.md \
+  --output .nds/<req-id>/01-requirements/PRD.docx
+```
+
+验证 `PRD.docx` 生成且内嵌截图；依赖不可用时按降级路径注明并跳过。
 
 ### 5. 机器可读 feature 清单（feature-checklist.json）
 
@@ -145,8 +188,11 @@ PRD 定稿后，把所有 Must/Should 级 feature 抽成机器可读清单（Ant
 
 ## 完成判定
 
-- PRD.md 8 段齐全且非空；每条 Must/Should 需求至少 1 条 Given-When-Then 验收标准
-- `prototype.html` 至少 3 页覆盖主用户流，精致线框风格；`preview.html` 至少 3 页一一对应（降级模式例外且 PRD 顶部注明）；preview 顶部含"氛围参考"标注
+- PRD.md 8 段齐全且非空；每条 Must/Should 需求至少 1 条 Given-When-Then 验收标准；每条 Must 级 Story 有「边界与异常」；第 2 段含护栏指标、第 5 段含埋点与数据上报（或显式"暂无"并说明理由）
+- `prototype.html` 至少 3 页覆盖主用户流，精致线框风格；`preview.html` 至少 3 页一一对应（降级模式例外且 PRD 顶部注明）；preview 顶部含"氛围参考"标注；两稿页区块 `id="page-*"` 一一对应
+- 已有项目时 `style-snapshot.md/.json` 已产出且复核完成（"布局模式"段已补写）；新项目时快照明确判定 `branch: new`
+- `shots.json` + `screenshots/` 覆盖两稿所有页面，逐张验证通过（2x PNG）
+- `PRD.docx` 已生成且内嵌截图（依赖不可用降级时在 PRD 顶部与 state.json 事件中注明）
 - `story-map.md` 标出 walking skeleton 与 MVP 切片
 - `feature-checklist.json` 覆盖所有 Must/Should feature，初始全 `passes:false`
 - 追溯矩阵覆盖所有 Must/Should 需求，origin/验证状态列非空
@@ -159,6 +205,8 @@ PRD 定稿后，把所有 Must/Should 级 feature 抽成机器可读清单（Ant
 ## 与下游 skill 的交接契约
 
 - `PRD.md` + `story-map.md` + `feature-checklist.json` 是 design-skill 的输入
+- `style-snapshot.md/.json`（已有项目时）可供建议 design-skill 的 identity-preservation 复用（项目既有令牌、来源文件与置信度已就绪）
 - `traceability-matrix.md` + `consistency-check.md` 是 review-skill 做三方对齐的依据
 - `risks.md` 中"技术可行性"类风险是 review-skill 重点核查项
 - `feature-checklist.json` 是 dev-skill/test-skill 防假绿的共享契约（dev 翻 passes、test 复核）
+- `PRD.docx` + `screenshots/` 是干系人评审的交付物（飞书导入分享）

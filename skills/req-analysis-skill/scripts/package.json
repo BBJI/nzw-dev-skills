@@ -1,0 +1,10 @@
+{
+  "name": "req-analysis-skill-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "req-analysis-skill 辅助脚本依赖（原型截图用 Puppeteer）",
+  "dependencies": {
+    "puppeteer": "^22.0.0"
+  }
+}

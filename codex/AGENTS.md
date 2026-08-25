@@ -31,7 +31,7 @@ nzw-dev-skills 是一套 AI 自主全流程交付技能包，以 **Loop Engineer
 
 ## 各 skill 一句话概要
 
-- **req-analysis-skill**：把模糊想法转化为 PRD + 双稿原型 + 故事地图 + 追溯矩阵 + 风险登记 + 机器可读 feature-checklist + 一致性检查。产出到 `.nds/<req-id>/01-requirements/`。创建新需求时分配 `req-NNN` 并设为 `active_req_id`。
+- **req-analysis-skill**：把模糊想法转化为 PRD + 双稿原型（已有项目先扫源码提取设计令牌，风格与项目实际一致）+ 原型截图 + 飞书可导入 docx + 故事地图 + 追溯矩阵 + 风险登记 + 机器可读 feature-checklist + 一致性检查。产出到 `.nds/<req-id>/01-requirements/`。创建新需求时分配 `req-NNN` 并设为 `active_req_id`。
 - **design-skill**：基于需求产出 W3C DTCG（2025.10 Stable）三层设计令牌、组件规格、模式库、信息架构、用户流程、高保真 HTML 稿。产出到 `.nds/<req-id>/02-design/`。视觉实现层委托 impeccable 引擎（缺失时 `npx impeccable install` 自动安装）：已有项目结合当前页面风格保持一致（identity-preservation），新项目从零设计。
 - **review-skill**：独立怀疑式评估器，从需求完整性 / UX 可实现性 / 技术可行性三维度评审，产出 Issue/Risk/Decision + evaluation.json 硬阈值评分 + 准入签字。产出到 `.nds/<req-id>/03-review/`。
 - **task-allocation-skill**：分解为 INVEST 合格、DAG 依赖、四要素契约的任务树，绑定 METR ≤1h 红线，单体任务走预言机分解，critical path 配 Sprint Contract。产出到 `.nds/<req-id>/04-tasks/`。
@@ -93,4 +93,4 @@ nzw-dev-skills 是一套 AI 自主全流程交付技能包，以 **Loop Engineer
 
 ---
 
-_version: 1.2.0_
+_version: 1.3.0_

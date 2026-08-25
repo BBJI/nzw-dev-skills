@@ -96,7 +96,7 @@ NZW_REPO=myorg/nzw-fork NZW_CLAUDE_DIR=~/my-claude \
 
 | 指令 | 作用 | 对应 skill |
 |---|---|---|
-| `/nzw-req <任务描述>` | 需求调研分析 | req-analysis-skill |
+| `/nzw-req <任务描述>` | 需求调研分析（PRD + 项目风格一致原型 + 截图 + 飞书 docx） | req-analysis-skill |
 | `/nzw-design` | UI/UX 设计规范（视觉实现委托 impeccable，缺失自动安装） | design-skill |
 | `/nzw-review` | 三维实现评估 | review-skill |
 | `/nzw-task` | 任务拆分与排期 | task-allocation-skill |
@@ -122,7 +122,7 @@ Codex 无斜杠命令，用自然语言触发即可（如"启动 nzw workflow �
 └── req-001/                # 需求 001 独立子树
     ├── state.json          # 机器态：任务树/进度/决策/events[]事件日志/bug_reflow（跨会话续传核心）
     ├── PROGRESS.md         # 人类态：单需求可读看板（由 events 渲染）
-    ├── 01-requirements/    # PRD + 双稿原型 + story-map + 追溯矩阵 + 风险 + feature-checklist.json + consistency-check
+    ├── 01-requirements/    # PRD(+docx) + 双稿原型 + style-snapshot + screenshots + story-map + 追溯矩阵 + 风险 + feature-checklist.json + consistency-check
     ├── 02-design/          # 设计令牌(W3C DTCG) + 组件规格 + patterns/ + IA + 高保真稿
     ├── 03-review/          # 评审报告 + 决策日志 + evaluation.json + sign-off
     ├── 04-tasks/           # WBS + 任务树(METR≤1h) + 排期 + sprint-contracts/
@@ -153,6 +153,9 @@ v1.2 完全兼容 v1.1，旧 `.nds/` 无需手动改动。首次加载旧 `state
 - `project.feature_checklist_ref`（防假绿载体契约路径）
 - `task_tree.tasks[].lock`（任务认领锁）
 - `index.json` 的 `version` 接受 `"1.1"` / `"1.2"`
+
+v1.3 主要新增（详见各 SKILL.md）：
+- **req-analysis**：项目风格扫描（`scripts/scan_style.py`，已有项目自动提取设计令牌及来源，原型与项目实际风格一致）、原型截图（`scripts/screenshot.mjs`，2x PNG 按页区块）、飞书可导入 `PRD.docx`（`scripts/md_to_docx.py`，截图内嵌）、PRD 8 段增强（护栏指标/边界与异常/埋点与数据上报/假设与依赖）、页区块 `id="page-*"` 双稿对应约定
 
 v1.2 主要新增（详见各 SKILL.md）：
 - **req-analysis**：story-map.md（walking skeleton + MVP 切片）、feature-checklist.json（机器可读，初始全 fail）、consistency-check.md（矛盾/缺口自动检查）、risks 补 Contingency/Trigger、追溯矩阵补 origin/验证状态
@@ -199,7 +202,9 @@ nzw-dev-skills/
 ├── skills/                 # 8 个 skill
 │   ├── req-analysis-skill/
 │   │   ├── SKILL.md
-│   │   └── references/impeccable-wireframe.md   # 渐进式披露：impeccable 集成指南
+│   │   ├── references/impeccable-wireframe.md   # 渐进式披露：impeccable 集成指南
+│   │   ├── references/screenshots-docx.md       # 原型截图 + 飞书 docx 导出规范
+│   │   └── scripts/                             # scan_style.py / md_to_docx.py / screenshot.mjs
 │   ├── design-skill/
 │   │   ├── SKILL.md
 │   │   └── references/impeccable-design.md
